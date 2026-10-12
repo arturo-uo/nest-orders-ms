@@ -3,7 +3,7 @@ import { CreateOrderDto } from './dto/create-order.dto'
 import { UpdateOrderDto } from './dto/update-order.dto'
 import { PrismaClient } from '@prisma/client'
 import { RpcException } from '@nestjs/microservices'
-import { OrderPaginationDto } from './dto'
+import { ChangeOrderStatusDto, OrderPaginationDto } from './dto'
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -24,13 +24,13 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
   async findAll(orderPaginationDto: OrderPaginationDto) {
     const { status, page, limit } = orderPaginationDto;
 
-    const totalPages = await this.order.count({ 
-      where: { status } 
+    const totalPages = await this.order.count({
+      where: { status }
     });
-    const lastPage = Math.ceil( totalPages / limit! );
+    const lastPage = Math.ceil(totalPages / limit!);
     return {
       data: await this.order.findMany({
-        skip: ( page! - 1 ) * limit!,
+        skip: (page! - 1) * limit!,
         take: limit,
         where: {
           status
@@ -54,5 +54,20 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
         message: 'Order nor found'
       })
     return order
+  }
+
+  async changeStatus(changeOrderStatusDto: ChangeOrderStatusDto) {
+    const { id, status } = changeOrderStatusDto
+    const order = await this.findOne(id)
+
+    if(order.status === status)
+      return order
+
+    return this.order.update({
+      where:{id},
+      data:{
+        status: status
+      }
+    })
   }
 }
