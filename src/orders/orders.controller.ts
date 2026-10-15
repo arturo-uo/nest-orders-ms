@@ -5,11 +5,14 @@ import { ChangeOrderStatusDto, CreateOrderDto, OrderPaginationDto, UpdateOrderDt
 
 @Controller()
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(private readonly ordersService: OrdersService) { }
 
   @MessagePattern('createOrder')
-  create(@Payload() createOrderDto: CreateOrderDto) {
-    return this.ordersService.create(createOrderDto)
+  async create(@Payload() createOrderDto: CreateOrderDto) {
+    console.log(createOrderDto)
+    const order = await this.ordersService.create(createOrderDto)
+    const paymentSession = await this.ordersService.createPaymentSession(order)
+    return { order, paymentSession }
   }
 
   @MessagePattern('findAllOrders')
@@ -21,10 +24,9 @@ export class OrdersController {
   findOne(@Payload('id', ParseUUIDPipe) id: string) {
     return this.ordersService.findOne(id)
   }
-  
+
   @MessagePattern('changeOrderStatus')
-  changeOrderStatus(@Payload() changeOrderStatusDto: ChangeOrderStatusDto)
-  {
+  changeOrderStatus(@Payload() changeOrderStatusDto: ChangeOrderStatusDto) {
     return this.ordersService.changeStatus(changeOrderStatusDto)
   }
 }
